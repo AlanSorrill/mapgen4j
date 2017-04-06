@@ -1,0 +1,12 @@
+#Mar 10, 2017 7:13:11 PM
+#Fri Mar 10 19:13:11 CST 2017
+Height=500
+Persistence=0.5
+NoiseQuality=STANDARD
+OctaveCount=10
+Split=127.5
+Lacunarity=1.5
+Seed=1
+Frequency=1.0
+Width=500
+Period=0.003
