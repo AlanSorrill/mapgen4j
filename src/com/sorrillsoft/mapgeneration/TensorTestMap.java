@@ -5,16 +5,20 @@
  */
 package com.sorrillsoft.mapgeneration;
 
-import com.sorrillsoft.mapgeneration.omniamap.roads.Tensor;
-import com.sorrillsoft.mapgeneration.omniamap.roads.TensorField;
-import com.sorrillsoft.mapgeneration.omniamap.roads.Vector2;
-import com.sorrillsoft.mapgeneration.omniamap.roads.fields.AdditionTField;
-import com.sorrillsoft.mapgeneration.omniamap.roads.fields.RadialTField;
+import com.sorrillsoft.mapgeneration.roads.Network;
+import com.sorrillsoft.mapgeneration.roads.VFTrace;
+import com.sorrillsoft.mapgeneration.roads.VFTrace.Streamline;
+import com.sorrillsoft.mapgeneration.roads.Vector;
+import com.sorrillsoft.mapgeneration.roads.Vertex;
+import com.sorrillsoft.mapgeneration.roads.fields.AverageWeightedField;
+import com.sorrillsoft.mapgeneration.roads.fields.ConstantField;
+import com.sorrillsoft.mapgeneration.roads.fields.MultiplyField;
+import com.sorrillsoft.mapgeneration.roads.fields.PerlinField;
+import com.sorrillsoft.mapgeneration.roads.fields.PointFalloffField;
+import com.sorrillsoft.mapgeneration.roads.fields.RadialField;
 import java.awt.Color;
 import java.awt.Graphics;
-import java.awt.Rectangle;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
+import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.util.HashMap;
 
@@ -28,136 +32,145 @@ public class TensorTestMap extends MapGenerator {
 
     @Override
     protected void onInit(Display d) {
-        AdditionTField af = new AdditionTField();
-        //WeightedAverageTField wf = new WeightedAverageTField();
-        //wf.blend(new ConstantTField(Tensor.FromRTheta(1,Math.PI/3)),5);
-        af.fields.add(new RadialTField(new Vector2(10, 10)));
-        //af.fields.add(new TangentTField(new Vector2(200, 200)));
-        field = af;
+        field = new AverageWeightedField();
 
     }
-    private TensorField field;
+    AverageWeightedField field;
 
     @Override
     public HashMap<String, Class> getParamTypes() {
         HashMap<String, Class> map = new HashMap();
         map.put("Width", Integer.class);
         map.put("Height", Integer.class);
-        map.put("sampleDist", Integer.class);
+        map.put("subDev", Integer.class);
         map.put("dVLength", Integer.class);
+        map.put("streamCount", Integer.class);
+        map.put("vertFrequency", Integer.class);
+        map.put("paintField", Boolean.class);
         return map;
+    }
+    private int pw = -1;
+    private int ph = -1;
+
+    private int getWidth() {
+        if (pw == -1) {
+            pw = (Integer) this.getParam("Width");
+        }
+        return pw;
+    }
+
+    private int getHeight() {
+        if (ph == -1) {
+            ph = (Integer) this.getParam("Height");
+        }
+        return ph;
     }
 
     @Override
     public void generate() {
         status = "collecting params";
-        final int sampleDist = (Integer) getParam("sampleDist");
-        final int width = (Integer) this.getParam("Width");
-        final int height = (Integer) this.getParam("Height");
-        int dVLength = (Integer) this.getParam("dVLength");
+        final int width = getWidth();
+        final int height = getHeight();
         status = "Creating data buffer";
-        data = new BufferedImage(width + width * sampleDist, height + height * sampleDist, BufferedImage.TYPE_INT_ARGB);
+        data = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
         Graphics g = data.getGraphics();
         status = "Formatting blank data buffer";
         g.setColor(Color.BLACK);
-        g.fillRect(0, 0, width + width * sampleDist, height + height * sampleDist);
-        this.getDisplay().dPanel.addMouseListener(new MouseListener() {
-
-            @Override
-            public void mouseClicked(MouseEvent e) {
-
-            }
-
-            @Override
-            public void mousePressed(MouseEvent e) {
-                drawTrace(new Vector2(Math.random() * width, Math.random() * height), width, height, sampleDist, 1000);
-            }
-
-            @Override
-            public void mouseReleased(MouseEvent e) {
-
-            }
-
-            @Override
-            public void mouseEntered(MouseEvent e) {
-
-            }
-
-            @Override
-            public void mouseExited(MouseEvent e) {
-
-            }
-        });
-        drawVectors(g);
-    }
-
-    private void drawTrace(Vector2 start, int width, int height, int sampleDist, int max) {
-        System.out.println("Tracing at " + start);
-        Vector2 base = new Vector2(width * sampleDist / 2, height * sampleDist / 2);
-        Vector2 trace = new Vector2(width * sampleDist / 2, height * sampleDist / 2);
-        Rectangle bounds = new Rectangle(0, 0, width * sampleDist, height * sampleDist);
-        Color c = Color.RED;
-        int i = 0;
-        while (bounds.contains(trace.getX(), trace.getY())) {
-            if (isCancelled() || (i++ > max)) {
-                break;
-            }
-            //prog = (int) ((i/t) * 100);
-            data.setRGB((int) trace.getX(), (int) trace.getY(), c.getRGB());
-            trace = Vector2.add(trace, field.sample(trace).EigenVector(Tensor.MAJOR));
-            System.out.println(trace);
+        g.fillRect(0, 0, width, height);
+        addTestNoiseFields();
+        if ((boolean) getParam("paintField")) {
+            paintField(g);
         }
+        this.notifyUpdate();
+        randomSample((int) getParam("streamCount"), (int) getParam("vertFrequency"));
+    }
+    private int[] sampleBounds;
+    private int sampleRate;
+
+    private void addTestNoiseFields() {
+        int w = getWidth();
+        int h = getHeight();
+        //PointFalloffField pff = new PointFalloffField(new Vector(w / 2, h / 2), 200);
+        //MultiplyField mf = new MultiplyField(new RadialField(new Vector(w / 2, h / 2)), pff);
+//
+//        PointFalloffField pff2 = new PointFalloffField(new Vector(350, 250), 150);
+//        MultiplyField mf2 = new MultiplyField(new RadialField(new Vector(350, 250)), pff2);
+//
+        field.addField(new ConstantField(Vector.fromTheta(0, 10)), 10);
+        //field.addField(mf, 10);
+        //af.addField(mf, 10);
+//        af.addField(mf2, 10);
+        PerlinField pf = new PerlinField();
+        field.addField(pf, 1);
     }
 
-    private void drawVectors(Graphics g) {
-        int sampleDist = (Integer) getParam("sampleDist");
-        int width = (Integer) this.getParam("Width");
-        int height = (Integer) this.getParam("Height");
-        int dVLength = (Integer) this.getParam("dVLength");
-        Tensor s;
-        Color c;
-        double vald;
-        int val;
-        for (int y = 0; y < height; y++) {
-            for (int x = 0; x < width; x++) {
-                if (isCancelled()) {
-                    return;
+    public void paintField(Graphics g) {
+        sampleBounds = new int[]{getWidth(), getHeight()};
+        sampleRate = ((sampleBounds[0] + sampleBounds[1]) / 2) / ((Integer) this.getParam("subDev"));
+        g.setColor(Color.BLACK);
+        g.fillRect(0, 0, getWidth(), getHeight());
+        g.setColor(Color.WHITE);
+        Vector v;
+        Vector sv;
+        int dr = 2;
+        //if(true){return;}
+        for (int y = 0; y <= sampleBounds[1]; y += sampleRate) {
+            for (int x = 0; x <= sampleBounds[0]; x += sampleRate) {
+                v = field.sample(x, y);
+                sv = Vector.multiply(v, ((int) this.getParam("dVLength")));
+                System.out.println(x + ", " + y);
+
+                g.fillOval(x - dr, y - dr, dr * 2, dr * 2);
+                g.drawLine(x, y, (int) Math.round(x + sv.getX()), (int) Math.round(y + sv.getY()));
+            }
+        }
+
+    }
+
+    public void randomSample(int streamCount, int res) {
+        Graphics2D g = data.createGraphics();
+        VFTrace trace = new VFTrace(field);
+        Network net = new Network();
+        boolean eign;
+        int direction;
+        for (int i = 0; i < streamCount; i++) {
+            System.out.println("Tracing " + i + "/" + streamCount);
+            eign = (Math.random() > 0.5);
+            direction = ((Math.random() > 0.5) ? -1 : 1);
+            trace.trace((Vector.random(getWidth(), getHeight())), res, direction, 50, eign);
+        }
+        int si = 0;
+        Streamline[] traces = trace.getTraces();
+        for (Streamline s : traces) {
+            System.out.println("Adding streamline to network " + si + "/" + traces.length);
+            net.addStreamline(s.getData(), res-1);
+            si++;
+        }
+        int r = 2;
+        Vector l;
+        int[] li;
+        int[] lli;
+        Vertex v;
+        Vertex[] verts = net.getVerticies();
+        for (int i = 0; i < verts.length; i++) {
+            System.out.println("Drawing vert " + i + "/" + verts.length);
+            v = verts[i];
+            l = v.getLocation();
+            li = l.toInt();
+            g.setColor(Color.magenta);
+            for (Vertex cv : v.getConnections()) {
+                if (cv == null) {
+                    break;
                 }
-                prog = (Math.round((((double) (y * width) + x) / (width * height)) * 100));
-                s = field.sample(new Vector2(x, y));
-                s = Tensor.normalize(s);
-                drawArrow(g, x * sampleDist, y * sampleDist, Vector2.multiply(s.EigenVector(Tensor.MAJOR), dVLength), Color.DARK_GRAY);
-                drawArrow(g, x * sampleDist, y * sampleDist, Vector2.multiply(s.EigenVector(Tensor.MINOR), dVLength), Color.LIGHT_GRAY);
-
-                //vald = (s.EigenVector(Tensor.MAJOR).length() / 2);
-                //System.out.println(vald);
-                //val = (int) Math.round(vald * 255);
-                //c = new Color(val, val, val);
-                //data.setRGB(x * sampleDist, y * sampleDist, c.getRGB());
-                notifyUpdate();
+                lli = cv.getLocation().toInt();
+                g.drawLine(li[0], li[1], lli[0], lli[1]);
             }
+            g.setColor(v.getVertColor());
+            g.fillOval(li[0] - r, li[1] - r, r * 2, r * 2);
+
+            this.notifyUpdate();
         }
-    }
-    private double arrowArmLength = 1 / 5;
 
-    private void drawArrow(Graphics g, int x, int y, Vector2 val, Color c) {
-        g.setColor(c);
-        int tx = (int) Math.round(x + val.getX());
-        int ty = (int) Math.round(y + val.getY());
-        int tlx, tly, trx, trw;
-        double t = val.getTheta();
-        t = Math.PI * 2 - t;
-        double armT = Math.PI / 6;
-        Vector2 l = Vector2.fromTheta(t + armT, val.length() * arrowArmLength);
-        tlx = (int) Math.round(tx + l.getX());
-        tly = (int) Math.round(ty + l.getY());
-        Vector2 r = Vector2.fromTheta(t - armT, val.length() * arrowArmLength);
-        trx = (int) Math.round(tx + r.getX());
-        trw = (int) Math.round(ty + r.getY());
-        g.drawLine(x, y, tx, ty);
-
-        //g.drawLine(tx, ty, trx, trw);
-        //g.drawLine(tx, ty, tlx, tly);
     }
 
     private BufferedImage def;
@@ -202,10 +215,16 @@ public class TensorTestMap extends MapGenerator {
                 return 500;
             case "height":
                 return 500;
-            case "sampleDist":
+            case "subDev":
                 return (Integer) 10;
             case "dVLength":
                 return (Integer) 5;
+            case "streamCount":
+                return (Integer) 20;
+            case "vertFrequency":
+                return (Integer) 10;
+            case "paintField":
+                return true;
         }
         return null;
     }
@@ -213,8 +232,8 @@ public class TensorTestMap extends MapGenerator {
     @Override
     public String getLocationDataString(int x, int y) {
         if (field != null) {
-            Tensor t = field.sample(new Vector2(x, y));
-            return "Raw val: " + t;
+            Vector v = field.sample(x, y);
+            return "Raw val: " + v;
         } else {
             return "";
         }

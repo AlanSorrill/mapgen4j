@@ -3,29 +3,58 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.sorrillsoft.mapgeneration.omniamap.roads;
+package com.sorrillsoft.mapgeneration.roads;
 
 /**
  *
  * @author alan
  */
-public class Vector2 {
+public class Vector {
 
-    public static Vector2 Zero = new Vector2(0, 0);
+    public static Vector Zero = new Vector(0, 0);
 
-    public static Vector2 multiply(Vector2 v, int m) {
-        return new Vector2(v.x * m, v.y * m);
+    public int[] toInt() {
+        return new int[]{(int) Math.round(x), (int) Math.round(y)};
     }
 
-    public static Vector2 fromTheta(double theta, double h) {
-        return new Vector2(Math.cos(theta) * h, Math.sin(theta) * h);
+    public static Vector random(double xb, double yb) {
+        return new Vector(Math.random() * xb, Math.random() * yb);
     }
 
-    public static Vector2 add(Vector2 a, Vector2 b) {
+    public void multiply(double m) {
+        setX(getX() * m);
+        setY(getY() * m);
+    }
+
+    public static Vector multiply(Vector v, double m) {
+        return new Vector(v.x * m, v.y * m);
+    }
+
+    public static Vector multiply(Vector v, Vector m) {
+        return new Vector(v.x * m.x, v.y * m.y);
+    }
+
+    public static Vector fromTheta(double theta, double h) {
+        return new Vector(Math.cos(theta) * h, Math.sin(theta) * h);
+    }
+
+    public static Vector add(Vector a, Vector b) {
         //System.out.println("adding " + a + " and " + b);
-        return new Vector2(a.x + b.x, a.y + b.y);
+        return new Vector(a.x + b.x, a.y + b.y);
     }
 
+    public static Vector divide(Vector v, int size) {
+        return new Vector(v.x / size, v.y / size);
+    }
+
+    public double distanceTo(Vector other) {
+        return Math.sqrt(Math.pow(other.x - x, 2) + Math.pow(other.y - y, 2));
+    }
+
+    public void addVector(Vector ov) {
+        setX(x + ov.x);
+        setY(y + ov.y);
+    }
     private double x;
     private double y;
 
@@ -45,7 +74,7 @@ public class Vector2 {
         this.y = y;
     }
 
-    public Vector2(double x, double y) {
+    public Vector(double x, double y) {
         this.x = x;
         this.y = y;
     }
@@ -54,13 +83,17 @@ public class Vector2 {
         return Math.atan(y / x);
     }
 
-    public static Vector2 subtract(Vector2 a, Vector2 b) {
-        return new Vector2(a.x - b.x, a.y - b.y);
+    public static Vector subtract(Vector a, Vector b) {
+        return new Vector(a.x - b.x, a.y - b.y);
     }
 
     @Override
     public String toString() {
         return "Vector2{" + "x=" + x + ", y=" + y + '}';
+    }
+
+    public Vector toUnitVector() {
+        return new Vector(x / this.length(), y / length());
     }
 
     @Override
@@ -79,7 +112,7 @@ public class Vector2 {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final Vector2 other = (Vector2) obj;
+        final Vector other = (Vector) obj;
         if (Double.doubleToLongBits(this.x) != Double.doubleToLongBits(other.x)) {
             return false;
         }
@@ -97,8 +130,12 @@ public class Vector2 {
         return Math.pow(length(), 2);
     }
 
-    public Vector2 getPerpVector() {
-        return new Vector2(0-getY(),getX());
+    public Vector getPerpVector() {
+        return new Vector(0 - getY(), getX());
+    }
+
+    public Vector copy() {
+        return new Vector(x, y);
     }
 
 }
