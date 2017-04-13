@@ -10,15 +10,17 @@ import com.sorrillsoft.mapgeneration.roads.VFTrace;
 import com.sorrillsoft.mapgeneration.roads.VFTrace.Streamline;
 import com.sorrillsoft.mapgeneration.roads.Vector;
 import com.sorrillsoft.mapgeneration.roads.Vertex;
+import com.sorrillsoft.mapgeneration.roads.VertexTransform;
 import com.sorrillsoft.mapgeneration.roads.fields.AverageWeightedField;
 import com.sorrillsoft.mapgeneration.roads.fields.ConstantField;
-import com.sorrillsoft.mapgeneration.roads.fields.MultiplyField;
 import com.sorrillsoft.mapgeneration.roads.fields.PerlinField;
-import com.sorrillsoft.mapgeneration.roads.fields.PointFalloffField;
-import com.sorrillsoft.mapgeneration.roads.fields.RadialField;
+import com.sorrillsoft.mapgeneration.roads.vtransforms.Translate;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
 import java.awt.image.BufferedImage;
 import java.util.HashMap;
 
@@ -77,6 +79,63 @@ public class TensorTestMap extends MapGenerator {
         status = "Formatting blank data buffer";
         g.setColor(Color.BLACK);
         g.fillRect(0, 0, width, height);
+
+        runSmoothTransformTest(g);
+        //runTensorTest(g);
+    }
+
+    private void runSmoothTransformTest(final Graphics g) {
+        final Network net = new Network();
+        int cw = getWidth() / 2;
+        int ch = getHeight() / 2;
+        int ic = 50;
+        int inc = getWidth() / ic - 5;
+        Vector[] bl = new Vector[ic + 1];
+        for (int i = 0; i < bl.length; i++) {
+            bl[i] = new Vector(inc * i + 5, ch);
+        }
+
+        net.addStreamline(bl, inc - 5);
+
+        net.draw(g);
+        this.notifyUpdate();
+        this.getDisplay().dPanel.addMouseListener(new MouseListener() {
+            int d;
+
+            @Override
+            public void mouseClicked(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mousePressed(MouseEvent e) {
+                d = e.getY();
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                Vertex v = net.getVertex(net.getVerticies().length / 2);
+                VertexTransform t = new Translate(new Vector(0, e.getY()-d), 20);
+                t.apply(v);
+                g.setColor(Color.BLACK);
+                g.fillRect(0, 0, getWidth(), getHeight());
+                net.draw(g);
+                notifyUpdate();
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+
+            }
+        });
+    }
+
+    private void runTensorTest(Graphics g) {
         addTestNoiseFields();
         if ((boolean) getParam("paintField")) {
             paintField(g);
@@ -143,7 +202,7 @@ public class TensorTestMap extends MapGenerator {
         Streamline[] traces = trace.getTraces();
         for (Streamline s : traces) {
             System.out.println("Adding streamline to network " + si + "/" + traces.length);
-            net.addStreamline(s.getData(), res-1);
+            net.addStreamline(s.getData(), res - 1);
             si++;
         }
         int r = 2;

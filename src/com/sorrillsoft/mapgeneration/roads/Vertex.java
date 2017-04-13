@@ -12,7 +12,7 @@ import java.util.ArrayList;
  *
  * @author alan
  */
-public class Vertex {
+public class Vertex implements Closest<Vertex> {
 
     private static int instanceCount = 0;
 
@@ -106,5 +106,22 @@ public class Vertex {
         }
         return true;
     }
+
+    @Override
+    public Vertex getClosest(Vertex[] verts) {
+        try {
+            Vertex c = verts[0];
+            double dist = getLocation().distanceTo(c.getLocation());
+            for (Vertex v : verts) {
+                if (getLocation().distanceTo(v.getLocation()) < dist) {
+                    c = v;
+                }
+            }
+            return c;
+        } catch (ArrayIndexOutOfBoundsException aaiobe) {
+            return null;
+        }
+    }
+    
 
 }

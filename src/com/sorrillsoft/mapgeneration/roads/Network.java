@@ -5,6 +5,8 @@
  */
 package com.sorrillsoft.mapgeneration.roads;
 
+import java.awt.Color;
+import java.awt.Graphics;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -27,9 +29,11 @@ public class Network {
         Vertex vert;
         Vector v;
         Vertex lastVert = null;
+        Vertex close;
         for (int i = 0; i < vs.length; i++) {
             v = vs[i];
-            vert = null;
+            vert = new Vertex(v);
+
             for (Vertex ver : verts) {
                 dist = v.distanceTo(ver.getLocation());
                 if (dist < minDist) {
@@ -39,9 +43,10 @@ public class Network {
                     break;
                 }
             }
-            if (vert == null) {
-                vert = new Vertex(v);
-
+            close = vert.getClosest(verts);
+            if (close != null && close.getLocation().distanceTo(vert.getLocation()) < minDist) {
+                vert = close;
+            } else {
                 verticies.add(vert);
             }
             if (lastVert != null) {
@@ -49,5 +54,34 @@ public class Network {
             }
             lastVert = vert;
         }
+    }
+
+    public void draw(Graphics g) {
+        int r = 2;
+        Vector l;
+        int[] li;
+        int[] lli;
+        Vertex v;
+        Vertex[] verts = getVerticies();
+        for (int i = 0; i < verts.length; i++) {
+            System.out.println("Drawing vert " + i + "/" + verts.length);
+            v = verts[i];
+            l = v.getLocation();
+            li = l.toInt();
+            g.setColor(Color.magenta);
+            for (Vertex cv : v.getConnections()) {
+                if (cv == null) {
+                    break;
+                }
+                lli = cv.getLocation().toInt();
+                g.drawLine(li[0], li[1], lli[0], lli[1]);
+            }
+            g.setColor(v.getVertColor());
+            g.fillOval(li[0] - r, li[1] - r, r * 2, r * 2);
+        }
+    }
+
+    public Vertex getVertex(int i) {
+        return verticies.get(i);
     }
 }

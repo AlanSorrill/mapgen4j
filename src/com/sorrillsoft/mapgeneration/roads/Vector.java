@@ -9,7 +9,7 @@ package com.sorrillsoft.mapgeneration.roads;
  *
  * @author alan
  */
-public class Vector {
+public class Vector implements Closest<Vector> {
 
     public static Vector Zero = new Vector(0, 0);
 
@@ -136,6 +136,18 @@ public class Vector {
 
     public Vector copy() {
         return new Vector(x, y);
+    }
+
+    @Override
+    public Vector getClosest(Vector[] verts) {
+        Vector c = verts[0];
+        double dist = distanceTo(c);
+        for (Vector v : verts) {
+            if (distanceTo(v) < dist) {
+                c = v;
+            }
+        }
+        return c;
     }
 
 }
