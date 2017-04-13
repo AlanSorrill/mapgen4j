@@ -80,8 +80,8 @@ public class TensorTestMap extends MapGenerator {
         g.setColor(Color.BLACK);
         g.fillRect(0, 0, width, height);
 
-        runSmoothTransformTest(g);
-        //runTensorTest(g);
+        //runSmoothTransformTest(g);
+        runTensorTest(g);
     }
 
     private void runSmoothTransformTest(final Graphics g) {
@@ -115,7 +115,7 @@ public class TensorTestMap extends MapGenerator {
             @Override
             public void mouseReleased(MouseEvent e) {
                 Vertex v = net.getVertex(net.getVerticies().length / 2);
-                VertexTransform t = new Translate(new Vector(0, e.getY()-d), 20);
+                VertexTransform t = new Translate(new Vector(0, e.getY() - d), 20);
                 t.apply(v);
                 g.setColor(Color.BLACK);
                 g.fillRect(0, 0, getWidth(), getHeight());
@@ -192,8 +192,11 @@ public class TensorTestMap extends MapGenerator {
         Network net = new Network();
         boolean eign;
         int direction;
+
         for (int i = 0; i < streamCount; i++) {
             System.out.println("Tracing " + i + "/" + streamCount);
+            prog = ((float) i / streamCount) * 100;
+            this.notifyUpdate();
             eign = (Math.random() > 0.5);
             direction = ((Math.random() > 0.5) ? -1 : 1);
             trace.trace((Vector.random(getWidth(), getHeight())), res, direction, 50, eign);
@@ -203,6 +206,8 @@ public class TensorTestMap extends MapGenerator {
         for (Streamline s : traces) {
             System.out.println("Adding streamline to network " + si + "/" + traces.length);
             net.addStreamline(s.getData(), res - 1);
+            prog = ((float) si / traces.length) * 100;
+            this.notifyUpdate();
             si++;
         }
         int r = 2;

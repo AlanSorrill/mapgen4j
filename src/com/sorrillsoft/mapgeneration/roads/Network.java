@@ -5,6 +5,7 @@
  */
 package com.sorrillsoft.mapgeneration.roads;
 
+import com.sorrillsoft.mapgeneration.roads.vtransforms.Translate;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.util.ArrayList;
@@ -20,6 +21,16 @@ public class Network {
 
     public Vertex[] getVerticies() {
         return verticies.toArray(new Vertex[verticies.size()]);
+    }
+
+    private Vertex mergeVerts(Vertex from, Vertex to) {
+        int rad = 4;
+        Vector newLocation = Vector.subtract(to.getLocation(), from.getLocation());
+        VertexTransform ft = new Translate(Vector.subtract(from.getLocation(), newLocation),rad);
+        VertexTransform tt = new Translate(Vector.subtract(to.getLocation(), newLocation),rad);
+        ft.apply(from);
+        tt.apply(to);
+        return to;
     }
 
     public void addStreamline(Vector[] vs, double minDist) {
@@ -39,7 +50,7 @@ public class Network {
                 if (dist < minDist) {
                     System.err.println(v + " is too close to " + ver.getLocation() + (dist));
                     //System.exit(0);
-                    vert = ver;
+                    vert = mergeVerts(vert, ver);
                     break;
                 }
             }

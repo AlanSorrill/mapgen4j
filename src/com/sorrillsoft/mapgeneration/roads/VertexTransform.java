@@ -14,7 +14,9 @@ import java.util.ArrayList;
 public abstract class VertexTransform {
 
     public void apply(Vertex sub) {
-        apply(sub, sub.getLocation(), new ArrayList(),0);
+        ArrayList<Integer> al = new ArrayList();
+        al.add(sub.getInstanceId());
+        apply(sub, sub.getLocation(), al,0);
     }
 
     public void apply(Vertex sub, Vector origin, ArrayList<Integer> done, int nodeDist) {
