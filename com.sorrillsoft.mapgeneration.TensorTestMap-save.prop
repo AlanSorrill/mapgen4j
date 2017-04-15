@@ -1,8 +1,8 @@
-#Apr 12, 2017 6:22:22 PM
-#Wed Apr 12 18:22:22 CDT 2017
-Width=1000
+#Apr 13, 2017 11:33:34 AM
+#Thu Apr 13 11:33:34 CDT 2017
 dVLength=5
-streamCount=100
+Width=1000
+streamCount=20
 subDev=10
 vertFrequency=10
 paintField=false

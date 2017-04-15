@@ -31,7 +31,16 @@ public class Translate extends VertexTransform {
     private Function funct;
 
     @Override
+    protected boolean customChecks() {
+        return super.customChecks(); //To change body of generated methods, choose Tools | Templates.
+    }
+    
+
+    @Override
     protected void transform(Vertex sub, Vector origin, int nodeDist) {
+        if(nodeDist>radius){
+            return;
+        }
         double strength = (double) nodeDist / radius;
         if (strength >= 1) {
             strength = 1;
