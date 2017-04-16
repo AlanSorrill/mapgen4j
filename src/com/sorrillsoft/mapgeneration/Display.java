@@ -83,6 +83,22 @@ public class Display extends javax.swing.JFrame {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
+        displayPanel.addMouseMotionListener(new java.awt.event.MouseMotionAdapter() {
+            public void mouseDragged(java.awt.event.MouseEvent evt) {
+                displayPanelMouseDragged(evt);
+            }
+        });
+        displayPanel.addMouseWheelListener(new java.awt.event.MouseWheelListener() {
+            public void mouseWheelMoved(java.awt.event.MouseWheelEvent evt) {
+                displayPanelMouseWheelMoved(evt);
+            }
+        });
+        displayPanel.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                displayPanelMousePressed(evt);
+            }
+        });
+
         javax.swing.GroupLayout displayPanelLayout = new javax.swing.GroupLayout(displayPanel);
         displayPanel.setLayout(displayPanelLayout);
         displayPanelLayout.setHorizontalGroup(
@@ -189,7 +205,7 @@ public class Display extends javax.swing.JFrame {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 1094, Short.MAX_VALUE)
+                .addComponent(jScrollPane1)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(jProgressBar1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -215,7 +231,6 @@ public class Display extends javax.swing.JFrame {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane1)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(classNameText, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -235,7 +250,8 @@ public class Display extends javax.swing.JFrame {
                         .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 115, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jProgressBar1, javax.swing.GroupLayout.PREFERRED_SIZE, 21, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(0, 0, Short.MAX_VALUE)))
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addComponent(jScrollPane1))
                 .addContainerGap())
         );
 
@@ -378,6 +394,27 @@ public class Display extends javax.swing.JFrame {
             map.notifyParamsChanged();
         }
     }//GEN-LAST:event_jTable1KeyReleased
+    int lx = -1, ly = -1;
+    private void displayPanelMouseDragged(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_displayPanelMouseDragged
+        if (lx == -1 || ly == -1) {
+            lx = evt.getX();
+            ly = evt.getY();
+        }
+        dPanel.getZoomManager().move(lx - evt.getX(), ly - evt.getY());
+        lx = evt.getX();
+        ly = evt.getY();
+        dPanel.repaint();
+    }//GEN-LAST:event_displayPanelMouseDragged
+
+    private void displayPanelMouseWheelMoved(java.awt.event.MouseWheelEvent evt) {//GEN-FIRST:event_displayPanelMouseWheelMoved
+        dPanel.getZoomManager().zoomIn(5*evt.getUnitsToScroll());
+        dPanel.repaint();
+    }//GEN-LAST:event_displayPanelMouseWheelMoved
+
+    private void displayPanelMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_displayPanelMousePressed
+        lx = evt.getX();
+        ly = evt.getY();
+    }//GEN-LAST:event_displayPanelMousePressed
 
     public void loadMapClass() {
         try {
@@ -424,7 +461,7 @@ public class Display extends javax.swing.JFrame {
      * @param args the command line arguments
      */
     public static void main(String args[]) {
-        
+
         /* Set the Nimbus look and feel */
         //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
         /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.

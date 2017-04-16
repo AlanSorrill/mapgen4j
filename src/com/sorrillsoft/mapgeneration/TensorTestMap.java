@@ -186,10 +186,10 @@ public class TensorTestMap extends MapGenerator {
 
     }
 
-    public void randomSample(int streamCount, int res) {
+    public void randomSample(int streamCount, final int res) {
         Graphics2D g = data.createGraphics();
         VFTrace trace = new VFTrace(field);
-        Network net = new Network();
+        final Network net = new Network();
         boolean eign;
         int direction;
 
@@ -201,14 +201,26 @@ public class TensorTestMap extends MapGenerator {
             direction = ((Math.random() > 0.5) ? -1 : 1);
             trace.trace((Vector.random(getWidth(), getHeight())), res, direction, 50, eign);
         }
-        int si = 0;
         Streamline[] traces = trace.getTraces();
-        for (Streamline s : traces) {
-            System.out.println("Adding streamline to network " + si + "/" + traces.length);
-            net.addStreamline(s.getData(), res - 1);
-            prog = ((float) si / traces.length) * 100;
-            this.notifyUpdate();
-            si++;
+        MultiTask<Streamline> mTask = new MultiTask<Streamline>(new Task() {
+
+            @Override
+            public void execute(Object data) {
+                Streamline s = (Streamline) data;
+                if (s == null) {
+                    return;
+                }
+                try {
+                    net.addStreamline(s.getData(), res - 1);
+                } catch (NullPointerException npe) {
+                    return;
+                }
+            }
+        }, traces);
+        mTask.start(1);//more than one thread causes instabilities
+        while (mTask.hasNext()) {
+            prog = mTask.getProgress();
+            notifyUpdate();
         }
         int r = 2;
         Vector l;
