@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.sorrillsoft.mapgeneration.roads.fields;
+package com.sorrillsoft.mapgeneration.roads.fields.vector;
 
 import com.sorrillsoft.mapgeneration.roads.Vector;
 import com.sorrillsoft.mapgeneration.roads.VectorField;
