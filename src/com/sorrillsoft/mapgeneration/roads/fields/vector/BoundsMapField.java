@@ -8,7 +8,6 @@ package com.sorrillsoft.mapgeneration.roads.fields.vector;
 import com.sorrillsoft.mapgeneration.roads.Vector;
 import com.sorrillsoft.mapgeneration.roads.VectorField;
 import com.sorrillsoft.mapgeneration.roads.fields.scalar.ScalarField;
-import static java.lang.Math.max;
 
 /**
  *

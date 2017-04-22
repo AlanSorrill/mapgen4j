@@ -47,7 +47,16 @@ public class VFTrace {
         Vector sample;
         b.addToData(location.copy());
         for (int i = 0; i < length; i++) {
-            sample = getField().sample(location, eign).toUnitVector();
+            sample = getField().sample(location, eign);
+            if(sample.length()==0){
+                if(i==0){
+                    b.data.clear();
+                }
+                break;
+            }
+            if(sample.length()>1){
+                sample = sample.toUnitVector();
+            }
             //if (direction == BACKWARD) {
             //    sample = Vector.fromTheta(sample.getTheta() + (PI), 1);
             //}

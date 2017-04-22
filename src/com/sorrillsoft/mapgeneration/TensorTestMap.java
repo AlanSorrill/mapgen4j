@@ -5,13 +5,19 @@
  */
 package com.sorrillsoft.mapgeneration;
 
+import com.flowpowered.noise.NoiseQuality;
+import com.flowpowered.noise.module.source.Perlin;
 import com.sorrillsoft.mapgeneration.roads.Network;
 import com.sorrillsoft.mapgeneration.roads.VFTrace;
 import com.sorrillsoft.mapgeneration.roads.VFTrace.Streamline;
 import com.sorrillsoft.mapgeneration.roads.Vector;
+import com.sorrillsoft.mapgeneration.roads.VectorField;
 import com.sorrillsoft.mapgeneration.roads.Vertex;
 import com.sorrillsoft.mapgeneration.roads.VertexTransform;
+import com.sorrillsoft.mapgeneration.roads.fields.scalar.ModifierScalarField;
+import com.sorrillsoft.mapgeneration.roads.fields.scalar.PerlinScalarField;
 import com.sorrillsoft.mapgeneration.roads.fields.vector.AverageWeightedField;
+import com.sorrillsoft.mapgeneration.roads.fields.vector.BoundsMapField;
 import com.sorrillsoft.mapgeneration.roads.fields.vector.ConstantField;
 import com.sorrillsoft.mapgeneration.roads.fields.vector.PerlinField;
 import com.sorrillsoft.mapgeneration.roads.vtransforms.Translate;
@@ -20,7 +26,6 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-import java.awt.event.MouseMotionListener;
 import java.awt.image.BufferedImage;
 import java.util.HashMap;
 
@@ -34,10 +39,24 @@ public class TensorTestMap extends MapGenerator {
 
     @Override
     protected void onInit(Display d) {
-        field = new AverageWeightedField();
+        averageField = new AverageWeightedField();
+        waterField = new BoundsMapField(new ModifierScalarField(this.generateTurrain()) {
 
+            @Override
+            public double modifySample(double val, double x, double y) {
+                //System.out.println("val: " + val);
+                if (val > 480) {
+                    return 1;
+                } else {
+                    return 0;
+                }
+            }
+        });
+        field = waterField.getEffectField(averageField);
     }
-    AverageWeightedField field;
+    BoundsMapField waterField;
+    VectorField field;
+    AverageWeightedField averageField;
 
     @Override
     public HashMap<String, Class> getParamTypes() {
@@ -54,6 +73,20 @@ public class TensorTestMap extends MapGenerator {
     private int pw = -1;
     private int ph = -1;
 
+    private PerlinScalarField generateTurrain() {
+        Perlin p = new Perlin();
+        p.setPersistence(0.5);
+        p.setNoiseQuality(NoiseQuality.FAST);
+        p.setOctaveCount(10);
+        p.setLacunarity(1.5);
+        p.setSeed(1);
+        p.setFrequency(1);
+        PerlinScalarField psf = new PerlinScalarField(p);
+        psf.setCoefficient(500);
+        psf.setPeriod(0.003);
+        return psf;
+    }
+
     private int getWidth() {
         if (pw == -1) {
             pw = (Integer) this.getParam("Width");
@@ -67,6 +100,7 @@ public class TensorTestMap extends MapGenerator {
         }
         return ph;
     }
+    private boolean debugWaterField = true;
 
     @Override
     public void generate() {
@@ -79,7 +113,16 @@ public class TensorTestMap extends MapGenerator {
         status = "Formatting blank data buffer";
         g.setColor(Color.BLACK);
         g.fillRect(0, 0, width, height);
-
+        int v;
+        if (debugWaterField) {
+            for (int x = 0; x < width; x++) {
+                for (int y = 0; y < height; y++) {
+                    v = (int) (this.waterField.sample(x, y).getX() * 255);
+                    //System.out.println(v);
+                    data.setRGB(x, y, new Color(v, v, v, 255).getRGB());
+                }
+            }
+        }
         //runSmoothTransformTest(g);
         runTensorTest(g);
     }
@@ -155,12 +198,12 @@ public class TensorTestMap extends MapGenerator {
 //        PointFalloffField pff2 = new PointFalloffField(new Vector(350, 250), 150);
 //        MultiplyField mf2 = new MultiplyField(new RadialField(new Vector(350, 250)), pff2);
 //
-        field.addField(new ConstantField(Vector.fromTheta(0, 10)), 10);
+        averageField.addField(new ConstantField(Vector.fromTheta(0, 10)), 10);
         //field.addField(mf, 10);
         //af.addField(mf, 10);
 //        af.addField(mf2, 10);
         PerlinField pf = new PerlinField();
-        field.addField(pf, 1);
+        averageField.addField(pf, 1);
     }
 
     public void paintField(Graphics g) {
